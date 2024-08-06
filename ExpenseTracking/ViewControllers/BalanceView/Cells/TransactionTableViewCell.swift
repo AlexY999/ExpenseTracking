@@ -45,7 +45,7 @@ class TransactionTableViewCell: UITableViewCell {
             amountLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
 
             categoryLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            categoryLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            categoryLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
         ])
     }
 
@@ -53,7 +53,7 @@ class TransactionTableViewCell: UITableViewCell {
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .none
         dateFormatter.timeStyle = .short
-        
+
         dateLabel.text = dateFormatter.string(from: transaction.date ?? Date())
         amountLabel.text = "\(transaction.amount ?? 0) BTC"
         categoryLabel.text = transaction.category ?? "-"

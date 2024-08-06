@@ -11,16 +11,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
-
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        
+
         window = UIWindow(windowScene: windowScene)
-        
+
         let balanceViewController = BalanceViewController()
         let navigationController = UINavigationController(rootViewController: balanceViewController)
         navigationController.isNavigationBarHidden = true
-        
+
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
     }
@@ -38,7 +37,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             balanceVC.updateBitcoinRate()
         }
     }
-    
+
     func sceneWillResignActive(_ scene: UIScene) {
         // Called when the scene will move from an active state to an inactive state.
         // This may occur due to temporary interruptions (ex. an incoming phone call).
@@ -58,6 +57,4 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
     }
 
-
 }
-

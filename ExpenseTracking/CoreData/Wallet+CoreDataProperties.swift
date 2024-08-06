@@ -1,7 +1,6 @@
 import Foundation
 import CoreData
 
-
 extension Wallet {
 
     @nonobjc public class func fetchRequest() -> NSFetchRequest<Wallet> {
@@ -12,6 +11,6 @@ extension Wallet {
 
 }
 
-extension Wallet : Identifiable {
+extension Wallet: Identifiable {
 
 }

@@ -1,7 +1,6 @@
 import Foundation
 import CoreData
 
-
 extension Transaction {
 
     @nonobjc public class func fetchRequest() -> NSFetchRequest<Transaction> {
@@ -14,6 +13,6 @@ extension Transaction {
 
 }
 
-extension Transaction : Identifiable {
+extension Transaction: Identifiable {
 
 }
