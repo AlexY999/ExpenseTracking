@@ -2,13 +2,7 @@ import UIKit
 import CoreData
 
 class BalanceViewController: UIViewController, BalanceViewControllerDelegate {
-
-    private let balanceLabel = UILabel()
-    private let balanceStackView = UIStackView()
-    private let addBalanceButton = UIButton(type: .system)
-    private let addTransactionButton = UIButton(type: .system)
-    private let transactionsTableView = UITableView()
-    private let bitcoinRateLabel = UILabel()
+    private let customView = BalanceView()
 
     private let context = CoreDataStack.shared.context
     private var transactions: [Transaction] = []
@@ -18,10 +12,15 @@ class BalanceViewController: UIViewController, BalanceViewControllerDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.addSubview(customView)
+        customView.frame = view.bounds
+        customView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
-        view.backgroundColor = .white
+        customView.addBalanceButton.addTarget(self, action: #selector(addBalanceTapped), for: .touchUpInside)
+        customView.addTransactionButton.addTarget(self, action: #selector(addTransactionTapped), for: .touchUpInside)
+        customView.transactionsTableView.delegate = self
+        customView.transactionsTableView.dataSource = self
 
-        setupUI()
         fetchData()
         updateBitcoinRate()
     }
@@ -33,7 +32,7 @@ class BalanceViewController: UIViewController, BalanceViewControllerDelegate {
     func updateBitcoinRate() {
         BitcoinRateService.shared.fetchRateIfNeeded { [weak self] rate in
             DispatchQueue.main.async {
-                self?.bitcoinRateLabel.text = "1 BTC = \(rate ?? "N/A") $"
+                self?.customView.bitcoinRateLabel.text = "1 BTC = \(rate ?? "N/A") $"
             }
         }
     }
@@ -42,76 +41,11 @@ class BalanceViewController: UIViewController, BalanceViewControllerDelegate {
         currentPage = 0
         transactions.removeAll()
         fetchTransactions()
-        transactionsTableView.reloadData()
+        customView.transactionsTableView.reloadData()
         updateBalanceLabel()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.scrollToTopTapped()
         }
-    }
-
-    private func setupUI() {
-        view.backgroundColor = UIColor.systemBackground
-
-        balanceLabel.translatesAutoresizingMaskIntoConstraints = false
-        balanceLabel.text = "0 BTC"
-        balanceLabel.font = UIFont.boldSystemFont(ofSize: 36)
-        balanceLabel.textColor = .label
-        balanceLabel.adjustsFontSizeToFitWidth = true
-        balanceLabel.minimumScaleFactor = 0.5
-
-        addBalanceButton.translatesAutoresizingMaskIntoConstraints = false
-        addBalanceButton.setImage(UIImage(systemName: "plus.circle.fill"), for: .normal)
-        addBalanceButton.tintColor = .systemBlue
-        addBalanceButton.addTarget(self, action: #selector(addBalanceTapped), for: .touchUpInside)
-
-        balanceStackView.addArrangedSubview(balanceLabel)
-        balanceStackView.addArrangedSubview(addBalanceButton)
-        balanceStackView.translatesAutoresizingMaskIntoConstraints = false
-        balanceStackView.axis = .horizontal
-        balanceStackView.spacing = 10
-        balanceStackView.alignment = .center
-        balanceStackView.distribution = .equalSpacing
-        view.addSubview(balanceStackView)
-
-        addTransactionButton.translatesAutoresizingMaskIntoConstraints = false
-        addTransactionButton.setTitle("Add Transaction", for: .normal)
-        addTransactionButton.backgroundColor = .systemGreen
-        addTransactionButton.setTitleColor(.white, for: .normal)
-        addTransactionButton.layer.cornerRadius = 10
-        addTransactionButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        addTransactionButton.addTarget(self, action: #selector(addTransactionTapped), for: .touchUpInside)
-        view.addSubview(addTransactionButton)
-
-        transactionsTableView.translatesAutoresizingMaskIntoConstraints = false
-        transactionsTableView.delegate = self
-        transactionsTableView.dataSource = self
-        transactionsTableView.register(TransactionTableViewCell.self, forCellReuseIdentifier: "TransactionCell")
-        transactionsTableView.backgroundColor = .systemGroupedBackground
-        view.addSubview(transactionsTableView)
-
-        bitcoinRateLabel.translatesAutoresizingMaskIntoConstraints = false
-        bitcoinRateLabel.text = "1 BTC = 0 $"
-        bitcoinRateLabel.font = UIFont.systemFont(ofSize: 16)
-        bitcoinRateLabel.textColor = .secondaryLabel
-        view.addSubview(bitcoinRateLabel)
-
-        NSLayoutConstraint.activate([
-            bitcoinRateLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            bitcoinRateLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-
-            balanceStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            balanceStackView.topAnchor.constraint(equalTo: bitcoinRateLabel.bottomAnchor, constant: 20),
-
-            addTransactionButton.topAnchor.constraint(equalTo: balanceStackView.bottomAnchor, constant: 20),
-            addTransactionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            addTransactionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            addTransactionButton.heightAnchor.constraint(equalToConstant: 44),
-
-            transactionsTableView.topAnchor.constraint(equalTo: addTransactionButton.bottomAnchor, constant: 20),
-            transactionsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            transactionsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            transactionsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
     }
 
     @objc private func addBalanceTapped() {
@@ -173,7 +107,7 @@ class BalanceViewController: UIViewController, BalanceViewControllerDelegate {
     private func updateBalanceLabel() {
         let fetchRequest: NSFetchRequest<Wallet> = Wallet.fetchRequest()
         if let wallets = try? context.fetch(fetchRequest), let wallet = wallets.first {
-            balanceLabel.text = "\(wallet.balance ?? 0) BTC"
+            customView.balanceLabel.text = "\(wallet.balance ?? 0) BTC"
         }
     }
 
@@ -196,16 +130,16 @@ class BalanceViewController: UIViewController, BalanceViewControllerDelegate {
     private func fetchMoreTransactions() {
         currentPage += 1
         fetchTransactions()
-        transactionsTableView.reloadData()
+        customView.transactionsTableView.reloadData()
     }
 
     private func scrollToTopTapped() {
-        let numberOfSections = transactionsTableView.numberOfSections
+        let numberOfSections = customView.transactionsTableView.numberOfSections
         if numberOfSections > 0 {
-            let numberOfRows = transactionsTableView.numberOfRows(inSection: 0)
+            let numberOfRows = customView.transactionsTableView.numberOfRows(inSection: 0)
             if numberOfRows > 0 {
                 let topIndexPath = IndexPath(row: 0, section: 0)
-                transactionsTableView.scrollToRow(at: topIndexPath, at: .top, animated: true)
+                customView.transactionsTableView.scrollToRow(at: topIndexPath, at: .top, animated: true)
             }
         }
     }
